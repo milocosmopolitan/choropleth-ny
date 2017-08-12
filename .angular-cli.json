@@ -26,7 +26,8 @@
         "../../node_modules/d3/build/d3.js",
         "../../node_modules/d3-geo/build/d3-geo.js",
         "../../node_modules/d3-selection/build/d3-selection.js",
-        "../../node_modules/d3-zoom/build/d3-zoom.js"
+        "../../node_modules/d3-zoom/build/d3-zoom.js",
+        "../../node_modules/d3-scale/build/d3-scale.js"
       ],
       "environmentSource": "environments/environment.ts",
       "environments": {
