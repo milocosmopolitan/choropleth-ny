@@ -5,8 +5,9 @@
   },
   "apps": [
     {
-      "root": "src",
-      "outDir": "dist",
+      "name": "demo",
+      "root": "src/demo",
+      "outDir": "dist/demo",
       "assets": [
         "assets",
         "favicon.ico"
@@ -15,11 +16,39 @@
       "main": "main.ts",
       "polyfills": "polyfills.ts",
       "test": "test.ts",
-      "tsconfig": "tsconfig.app.json",
-      "testTsconfig": "tsconfig.spec.json",
+      "tsconfig": "../tsconfig.app.json",
+      "testTsconfig": "../tsconfig.spec.json",
       "prefix": "app",
       "styles": [
-        "styles.css"
+        "styles.less"
+      ],
+      "scripts": [
+        "../../node_modules/d3/build/d3.js",
+        "../../node_modules/d3-geo/build/d3-geo.js",
+        "../../node_modules/d3-selection/build/d3-selection.js",
+        "../../node_modules/d3-zoom/build/d3-zoom.js"
+      ],
+      "environmentSource": "environments/environment.ts",
+      "environments": {
+        "dev": "environments/environment.ts",
+        "prod": "environments/environment.prod.ts"
+      }
+    },
+    {
+      "name": "lib",
+      "root": "src/lib",
+      "outDir": "dist/lib",
+      "assets": [
+        "assets",
+        "favicon.ico"
+      ],
+      "polyfills": "polyfills.ts",
+      "test": "test.ts",
+      "tsconfig": "../tsconfig.app.json",
+      "testTsconfig": "../tsconfig.spec.json",
+      "prefix": "cp",
+      "styles": [
+        "styles.less"
       ],
       "scripts": [],
       "environmentSource": "environments/environment.ts",
@@ -51,7 +80,7 @@
     }
   },
   "defaults": {
-    "styleExt": "css",
+    "styleExt": "less",
     "component": {}
   }
 }
