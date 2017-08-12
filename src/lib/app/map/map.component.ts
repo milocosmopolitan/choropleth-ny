@@ -1,21 +1,30 @@
-import {AfterViewInit, Component, ElementRef, OnInit, Renderer2, ViewChild} from '@angular/core';
+import {
+  AfterViewInit, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import * as d3 from 'd3';
 import * as topojson from 'topojson';
+import {SliderComponent} from './slider/slider.component';
 
 @Component({
   selector: 'cp-map',
   template: `
+    <cp-slider></cp-slider>
     <div id="tooltip" class="hidden">
       <div><strong>Borough:</strong> <span id="borough"></span></div>
       <div><strong>District:</strong> <span id="district"></span></div>
     </div>
     <svg #map width="700" height="500"></svg>
   `,
-  styleUrls: ['./map.component.less']
+  styleUrls: ['./map.component.less'],
+  encapsulation: ViewEncapsulation.None
 })
-export class MapComponent implements AfterViewInit {
+export class MapComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild('map') map: ElementRef;
+  @ViewChild(SliderComponent) slider: SliderComponent;
+
+  sliderValue$;
 
   margin = {top: 10, left: 10, bottom: 10, right: 10};
   width: any | number = 1000 - this.margin.left - this.margin.right;
@@ -41,6 +50,8 @@ export class MapComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     // console.log(this.svg, this.map);
+    this.sliderValue$ = this.slider.onChange.subscribe(console.log)
+
     const { width, height} = this;
 
     const svg = d3.select(this.map.nativeElement);
@@ -90,6 +101,7 @@ export class MapComponent implements AfterViewInit {
           d3.select('#tooltip')
             .style('top', (d3.event.pageY) + 20 + 'px')
             .style('left', (d3.event.pageX) + 20 + 'px')
+            .style('z-index', 100)
 
             // update governorate name
             .select('#borough')
@@ -116,6 +128,10 @@ export class MapComponent implements AfterViewInit {
           d3.select('#tooltip').classed('hidden', true);
         });
     });
+  }
+
+  ngOnDestroy() {
+    this.sliderValue$.unsubscribe();
   }
 
 }

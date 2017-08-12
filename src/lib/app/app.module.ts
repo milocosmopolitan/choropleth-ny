@@ -12,6 +12,6 @@ import { SliderComponent } from './map/slider/slider.component';
   imports: [
     CommonModule
   ],
-  exports: [MapComponent]
+  exports: [MapComponent, SliderComponent]
 })
 export class D3ChoroplethMapModule { }
