@@ -1,4 +1,5 @@
 import {
+  AfterViewChecked,
   AfterViewInit, Component, ElementRef, EventEmitter, OnInit, Output, ViewChild,
   ViewEncapsulation
 } from '@angular/core';
@@ -13,22 +14,23 @@ import * as moment from 'moment';
   styleUrls: ['./slider.component.less'],
   encapsulation: ViewEncapsulation.None
 })
-export class SliderComponent implements AfterViewInit {
+export class SliderComponent implements AfterViewInit, AfterViewChecked {
 
   @ViewChild('slider') slider: ElementRef;
   @Output('onChange') onChange: EventEmitter<any> = new EventEmitter();
 
   margin = {right: 50, left: 50};
-  width = 700 - this.margin.left - this.margin.right;
+  width = 700;
   height = 50;
+  innerWidth = this.width - this.margin.left - this.margin.right;
   step = 5;
 
   x = d3.scaleTime()
     .domain([new Date(2000, 0, 1), new Date(2000, 0, 11)])
-    .range([0, this.width])
+    .range([0, this.innerWidth])
     .clamp(true);
 
-  constructor() { }
+  constructor(public el: ElementRef) { }
 
   onHandleDrag(handle, val: any) {
     handle.attr('cx', this.x(val));
@@ -36,7 +38,45 @@ export class SliderComponent implements AfterViewInit {
     this.onChange.emit(val)
   }
 
-  ngAfterViewInit() {
+  resize() {
+    if (this.width !== this.el.nativeElement.clientWidth) {
+      this.width = this.el.nativeElement.clientWidth;
+      this.innerWidth = this.width - this.margin.left - this.margin.right;
+      this.x = d3.scaleTime()
+        .domain([new Date(2000, 0, 1), new Date(2000, 0, 11)])
+        .range([0, this.innerWidth])
+        .clamp(true);
+
+      const drag = this.drag();
+      // .on('end drag', () => {console.log('drag end!!!')});
+
+      const svg = d3.select(this.slider.nativeElement);
+      svg.attr('width', this.width);
+      svg.selectAll('line')
+        .attr('x1', this.x.range()[0])
+        .attr('x2', this.x.range()[1])
+        .call(drag);
+
+
+      svg.selectAll('text')
+        .data(this.x.ticks(5))
+        .attr('x', this.x);
+    }
+  }
+
+  drag() {
+    const svg = d3.select(this.slider.nativeElement);
+    const handle = svg.select('circle.handle');
+    const slider = svg.select('g.slider');
+
+    return d3.drag()
+      .on('start.interrupt', () => { slider.interrupt(); })
+      .on('start drag', (t) => {
+        this.onHandleDrag(handle, this.x.invert(d3.event.x))
+      });
+  }
+
+  initSlider() {
     const { margin, height } = this;
     const svg = d3.select(this.slider.nativeElement);
 
@@ -63,12 +103,7 @@ export class SliderComponent implements AfterViewInit {
       .attr('class', 'handle')
       .attr('r', 9);
 
-    const drag = d3.drag()
-      .on('start.interrupt', () => { slider.interrupt(); })
-      .on('start drag', (t) => {
-        this.onHandleDrag(handle, this.x.invert(d3.event.x))
-      });
-      // .on('end drag', () => {console.log('drag end!!!')});
+    const drag = this.drag();
 
     track.call(drag);
     trackInset.call(drag);
@@ -84,16 +119,19 @@ export class SliderComponent implements AfterViewInit {
       .attr('text-anchor', 'middle')
       .text(d => (moment(d).format('YYYY-MM-DD')));
 
-
-
     slider.transition() // Gratuitous intro!
       .duration(750)
       .tween('hue', () => {
         const i = d3.interpolate(0, 70);
         return (t) => { console.log(t) };
       });
+  }
 
+  ngAfterViewInit() {
+    this.initSlider()
+  }
 
-
+  ngAfterViewChecked() {
+    this.resize();
   }
 }
