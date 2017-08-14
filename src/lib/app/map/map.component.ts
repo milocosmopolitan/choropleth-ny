@@ -10,14 +10,15 @@ import * as polygonCenter from 'geojson-polygon-center'
 import {SliderComponent} from './slider/slider.component';
 import { latLng, LatLngBounds, geoJSON } from 'leaflet';
 import {Event, GeoJSONDirective, MapComponent as LeafMapComponent, OSM_TILE_LAYER_URL} from '@yaga/leaflet-ng2';
-
+import { BasemapLayer } from 'esri-leaflet'
+import * as moment from 'moment';
 declare let google: any;
 
 @Component({
   selector: 'cp-map',
   template: `
     <cp-slider></cp-slider>
-    <cp-map-control></cp-map-control>
+    <!--<cp-map-control></cp-map-control>-->
     <div id="tooltip" class="hidden">
       <div><strong>Borough:</strong> <span id="borough"></span></div>
       <div><strong>District:</strong> <span id="district"></span></div>
@@ -44,8 +45,7 @@ declare let google: any;
       [scrollWheelZoomEnabled]="getInputPropertyByName('scrollWheelZoomEnabled').value"
       [touchZoomEnabled]="getInputPropertyByName('touchZoomEnabled').value"
       [tapEnabled]="getInputPropertyByName('tapEnabled').value">
-      <yaga-tile-layer [url]="'http://a.tile.openstreetmap.org/{z}/{x}/{y}.png'"></yaga-tile-layer>
-      <yaga-tile-layer yaga-geojson></yaga-tile-layer>
+      <yaga-tile-layer [url]="'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png'"></yaga-tile-layer>
     </yaga-map>
     <!--<svg #map width="0" height="0"></svg>
     <p-gmap #gmap [options]="options" [overlays]="overlays" [style]="{'width':'100%','height':'700px'}" ></p-gmap>-->
@@ -68,8 +68,8 @@ export class MapComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
       {name: 'zoom', value: 12, type: 'number' },
       {name: 'lat', value: 40.70, type: 'number' },
       {name: 'lng', value: -73.94, type: 'number' },
-      {name: 'minZoom', value: 5, type: 'number' },
-      {name: 'maxZoom', value: 15, type: 'number'},
+      {name: 'minZoom', value: 10, type: 'number' },
+      {name: 'maxZoom', value: 18, type: 'number'},
       {
         name: 'maxBounds',
         type: 'latlngBounds',
@@ -106,7 +106,7 @@ export class MapComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
   overlays: any[];
 
   // d3
-  sliderValue$;
+  sliderSubscription$;
   margin = {top: 10, left: 10, bottom: 10, right: 10};
   width: any | number = 1000 - this.margin.left - this.margin.right;
   mapRatio: any | number = 1;
@@ -121,6 +121,8 @@ export class MapComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
 
   initialized = false;
 
+  sliderVal;
+
   constructor(
     public el: ElementRef,
     public renderer: Renderer2
@@ -129,17 +131,17 @@ export class MapComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
     this.overlays = [];
     this.bounds = new google.maps.LatLngBounds();
     // leaflet
-    this.options = {
-      layers: [
-        L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-          maxZoom: 18,
-          id: 'mapbox.streets',
-          accessToken: 'pk.eyJ1IjoibWlsb2Nvc21vcG9saXRhbiIsImEiOiJjajFzNm5kMmcwMGM5MnFvNmIwNjVuNXloIn0.-LZhuP3-yes-BZbdzF8lXg'
-        })
-      ],
-      zoom: 5,
-      center: L.latLng({lng: -73.94, lat: 40.70})
-    };
+    // this.options = {
+    //   layers: [
+    //     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+    //       maxZoom: 18,
+    //       id: 'mapbox.streets',
+    //       accessToken: 'pk.eyJ1IjoibWlsb2Nvc21vcG9saXRhbiIsImEiOiJjajFzNm5kMmcwMGM5MnFvNmIwNjVuNXloIn0.-LZhuP3-yes-BZbdzF8lXg'
+    //     })
+    //   ],
+    //   zoom: 5,
+    //   center: L.latLng({lng: -73.94, lat: 40.70})
+    // };
 
     this.style = this.style.bind(this);
     // google
@@ -178,7 +180,7 @@ export class MapComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
   }
 
   getColor(d) {
-    console.log('getColor', d)
+    // console.log('getColor', d)
     return d > 1000 ? '#800026' :
       d > 500  ? '#BD0026' :
         d > 200  ? '#E31A1C' :
@@ -190,34 +192,63 @@ export class MapComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
   }
 
   style(feature) {
-    const min = Math.ceil(5);
-    const max = Math.floor(80);
-    const random =  Math.floor(Math.random() * (max - min)) + min;
-
+    // const min = Math.ceil(5);
+    // const max = Math.floor(80);
+    // const random =  Math.floor(Math.random() * (max - min)) + min;
+    // console.log(feature, feature.properties.data, this.sliderVal);
     return {
-      fillColor: this.getColor(feature.properties.boroughCode * random),
-      weight: 2,
+      fillColor: this.getColor(feature.properties.data[this.sliderVal]),
+      weight: 0.3,
       opacity: 1,
-      color: 'white',
+      color: '#071848',
       dashArray: '3',
-      fillOpacity: 0.7
+      fillOpacity: 0.3
     };
   }
 
 
   initLeaflet() {
+    (window as any).map = this.mapComponent;
+    ((this.mapComponent as any)._container as HTMLElement).style.height = this.height+'px';
+    // console.log('this.mapComponent', this.mapComponent, this.layer);
+    // this.mapComponent._container.style.height = '300px';
+    this.mapComponent.invalidateSize();
+
+    function randomInt(min, max) {
+      const _min = Math.ceil(min);
+      const _max = Math.floor(max);
+      return Math.floor(Math.random() * (_max - _min)) + _min;
+    }
 
 
+    // console.log(BasemapLayer)
     d3.json('assets/community_districts.geojson', (error, ny: any) => {
+      // L.esri.basemapLayer("Topographic").addTo(this.mapComponent);
+
+      const data = Object.assign({}, ny);
+      data.features = ny.features.map(feature => {
+        feature.properties['data'] = {
+          '2017-07-01': randomInt(0, 1001),
+          '2017-07-02': randomInt(0, 1001),
+          '2017-07-03': randomInt(0, 1001),
+          '2017-07-04': randomInt(0, 1001),
+          '2017-07-05': randomInt(0, 1001),
+          '2017-07-06': randomInt(0, 1001),
+          '2017-07-07': randomInt(0, 1001),
+          '2017-07-08': randomInt(0, 1001),
+          '2017-07-09': randomInt(0, 1001),
+          '2017-07-10': randomInt(0, 1001),
+          '2017-07-11': randomInt(0, 1001)
+        };
+        return feature;
+      });
       this.layer = new GeoJSONDirective(this.mapComponent);
-      this.layer.addData(ny);
+      this.layer.addData(data);
       this.layer.setStyle(this.style);
-      console.log('initLeaflet', this.mapComponent, this.layer, ny)
     });
   }
 
   initGmap() {
-    console.log(this, this.gmap.map.data)
     const stateLayer = this.gmap.map.data;
 
     function getColor(coli) {
@@ -354,15 +385,15 @@ export class MapComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
   };
 
   ngAfterViewInit() {
-    (window as any).map = this.mapComponent;
-    ((this.mapComponent as any)._container as HTMLElement).style.height = this.height+'px';
-    console.log('this.mapComponent', this.mapComponent, this.layer)
-    // this.mapComponent._container.style.height = '300px';
-    this.mapComponent.invalidateSize();
+
 
 
     // console.log(this.svg, this.map);
-    this.sliderValue$ = this.slider.onChange.subscribe(console.log)
+    this.sliderSubscription$ = this.slider.onChange.subscribe(val => {
+      this.sliderVal = moment(val).format('YYYY-MM-DD');
+      console.log('this.sliderVal', this.sliderVal, moment(this.sliderVal).format('YYYY-MM-DD'))
+      this.layer.setStyle(this.style);
+    });
     // DEFAULT VIEW
     // this.initMap()
 
@@ -377,7 +408,7 @@ export class MapComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
   }
 
   ngOnDestroy() {
-    this.sliderValue$.unsubscribe();
+    this.sliderSubscription$.unsubscribe();
   }
 
 }

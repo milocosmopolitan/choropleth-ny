@@ -26,7 +26,7 @@ export class SliderComponent implements AfterViewInit, AfterViewChecked {
   step = 5;
 
   x = d3.scaleTime()
-    .domain([new Date(2000, 0, 1), new Date(2000, 0, 11)])
+    .domain([new Date(2017, 6, 1), new Date(2017, 6, 11)])
     .range([0, this.innerWidth])
     .clamp(true);
 
@@ -43,7 +43,7 @@ export class SliderComponent implements AfterViewInit, AfterViewChecked {
       this.width = this.el.nativeElement.clientWidth;
       this.innerWidth = this.width - this.margin.left - this.margin.right;
       this.x = d3.scaleTime()
-        .domain([new Date(2000, 0, 1), new Date(2000, 0, 11)])
+        .domain([new Date(2017, 6, 1), new Date(2017, 6, 11)])
         .range([0, this.innerWidth])
         .clamp(true);
 
