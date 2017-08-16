@@ -6,12 +6,11 @@ import {
 import { GMap } from 'primeng/components/gmap/gmap';
 import * as d3 from 'd3';
 import * as topojson from 'topojson';
-import * as polygonCenter from 'geojson-polygon-center'
 import {SliderComponent} from './slider/slider.component';
-import { latLng, LatLngBounds, geoJSON } from 'leaflet';
+import { latLng, LatLngBounds } from 'leaflet';
 import {Event, GeoJSONDirective, MapComponent as LeafMapComponent, OSM_TILE_LAYER_URL} from '@yaga/leaflet-ng2';
-import { BasemapLayer } from 'esri-leaflet'
 import * as moment from 'moment';
+
 declare let google: any;
 
 @Component({
@@ -209,7 +208,7 @@ export class MapComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
 
   initLeaflet() {
     (window as any).map = this.mapComponent;
-    ((this.mapComponent as any)._container as HTMLElement).style.height = this.height+'px';
+    ((this.mapComponent as any)._container as HTMLElement).style.height = this.height + 'px';
     // console.log('this.mapComponent', this.mapComponent, this.layer);
     // this.mapComponent._container.style.height = '300px';
     this.mapComponent.invalidateSize();
